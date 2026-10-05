@@ -50,6 +50,9 @@
   ~22 GB of scratch for 60s. Render with `--sdr`.
 - Speed on a 4-core CPU: cutout ~0.5-1.3 s/frame (60s reel ~25 min), full-quality render ~26 min for 60s. Plan the
   draft-first workflow around it, and run both in the background.
+- Draft previews (`--fps 15`) can show a caption one frame into the next shot when a cut lands on an odd 30fps
+  frame: the draft samples the video on its own 15fps grid. Judge cut timing on the full-quality 30fps render
+  (check_cuts.py), not on the draft.
 - A container restart kills background jobs: check whether the output file is complete (ffprobe duration, a full
   decode) before re-running anything.
 - `pkill -f <script name>` from a Bash call can kill that shell itself (its command line contains the name): stop
