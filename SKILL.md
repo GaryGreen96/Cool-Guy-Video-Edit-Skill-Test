@@ -178,7 +178,7 @@ Before the expensive render, all of these are settled: transcription, preflight 
 placement, the 2-4 special moments. Then:
 ```bash
 PY build.py           # without --safe
-HF render -o renders/<slug>-draft-vN.mp4 --quality draft --fps 15 --sdr   # draft preview: send it, collect notes
+HF render -o renders/<slug>-draft-vN.mp4 --quality draft --fps 15 --sdr   # draft preview (~14 min/60s on a 4-core CPU): send it, collect notes
 # only once the structure is approved (or the user says go):
 HF render -o renders/<slug>-vN-raw.mp4 --quality high --sdr   # ~1.5-2 min/25s on Apple Silicon, ~26 min/60s on a 4-core CPU
 ffmpeg -i renders/<slug>-vN-raw.mp4 -c:v copy -af loudnorm=I=-15:TP=-3:LRA=11,alimiter=limit=0.6:level=false -c:a aac -b:a 192k -ar 48000 renders/<slug>-vN.mp4

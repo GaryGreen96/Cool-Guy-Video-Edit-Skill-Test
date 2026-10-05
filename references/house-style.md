@@ -76,7 +76,7 @@ Settle the creative structure before the expensive render:
 4. Caption placement decided (lower band / top band per shot).
 5. The 2-4 special typography moments decided and listed.
 6. Snapshots (cheap) to check layout and safe zone, then a **draft preview** render:
-   `HF render -o renders/<slug>-draft-vN.mp4 --quality draft --fps 15 --sdr` and send it as the review copy.
+   `HF render -o renders/<slug>-draft-vN.mp4 --quality draft --fps 15 --sdr` (~14 min for 60s on a 4-core CPU, about half the full render) and send it as the review copy.
 7. Only after the structure is approved (or the creator says go): the full-quality render
    `HF render -o renders/<slug>-vN.mp4 --quality high --sdr`, loudness pass, check_cuts.py, phone copy.
 - **Batch revisions.** Collect all notes from a review into one round; do not re-render after each small change.
