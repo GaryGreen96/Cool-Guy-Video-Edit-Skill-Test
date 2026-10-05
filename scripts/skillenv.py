@@ -142,6 +142,25 @@ def concat_entry(name):
     return "file '" + name.replace('\\', '/').replace("'", "'\\''") + "'\n"
 
 
+VOCAB_FILE = os.path.join(SKILL_DIR, 'vocabulary.txt')
+UNSURE = 0.55   # Whisper word probability below this is listed for the transcription preflight
+
+
+def vocabulary(path=VOCAB_FILE):
+    """project names and spellings (vocabulary.txt, one per line) -> list; used as the Whisper prompt"""
+    try:
+        with open(path, encoding='utf-8') as fh:
+            return [l.strip() for l in fh if l.strip() and not l.startswith('#')]
+    except OSError:
+        return []
+
+
+def whisper_prompt(extra=''):
+    """Whisper initial_prompt: the caller's names + the project vocabulary, deduplicated"""
+    terms = [t.strip() for t in extra.replace('.', ',').split(',') if t.strip()] + vocabulary()
+    return ', '.join(dict.fromkeys(terms)) + '.' if terms else None
+
+
 def utf8_stdio():
     """Windows pipes default to cp1252: printing a transcript with a curly quote or a music note would crash."""
     for st in (sys.stdout, sys.stderr):

@@ -40,6 +40,21 @@
 - Large file uploads to chat can fail: deliver a 720p crf 26-28 phone copy and keep the full render on disk.
 - Pinterest/Instagram pages block logged-out browsing; curl the page HTML or use Apify.
 
+## Cloud / sandboxed machines (hit on a Linux cloud container, first real test)
+- Whisper models come from Hugging Face. A network allowlist needs `huggingface.co` AND its file hosts
+  (`*.hf.co`: cas-server.xethub.hf.co, cas-bridge.xethub.hf.co, us.aws.cdn.hf.co; `cdn-lfs.huggingface.co`).
+  The cutout model comes from a GitHub release (github.com, release-assets.githubusercontent.com).
+- cdn.jsdelivr.net can be blocked: the composition then has no GSAP and nothing animates. Vendor gsap into
+  `<project>/assets/gsap.min.js` from npm (registry.npmjs.org is usually allowed); the template prefers that file.
+- iPhone footage is HDR (HLG, bt2020). assemble.py keeps the tags, so HyperFrames renders HDR by default and wants
+  ~22 GB of scratch for 60s. Render with `--sdr`.
+- Speed on a 4-core CPU: cutout ~0.5-1.3 s/frame (60s reel ~25 min), full-quality render ~26 min for 60s. Plan the
+  draft-first workflow around it, and run both in the background.
+- A container restart kills background jobs: check whether the output file is complete (ffprobe duration, a full
+  decode) before re-running anything.
+- `pkill -f <script name>` from a Bash call can kill that shell itself (its command line contains the name): stop
+  background jobs by PID or through the task tool.
+
 ## Windows (same skill, different shell)
 - Claude Code on Windows runs commands in Git Bash when Git for Windows is installed, otherwise in PowerShell, and
   both can be available at once. Write commands that work in both: full paths in double quotes with forward

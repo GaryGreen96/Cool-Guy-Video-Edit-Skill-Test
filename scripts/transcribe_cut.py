@@ -2,6 +2,8 @@
 """Word timings for the assembled cut -> <project>/words.json (medium.en; these drive every caption).
 
 Usage:  PY transcribe_cut.py <project_dir> ["prompt with names: Claude, Claude Code, skill"]
+The prompt is merged with SK/vocabulary.txt (the project's names and spellings). Every word keeps its confidence
+("p"); low-confidence words are written to work/uncertain.txt for the transcription preflight (house-style.md).
 Whisper mishears proper nouns ("Claude" -> "cloud"/"claws", "skill" -> "scale", "design" -> "this line"):
 pass them in the prompt and still fix captions by hand from what the speaker actually said.
 """
@@ -19,12 +21,17 @@ skillenv.utf8_stdio()
 proj = skillenv.path_arg(sys.argv[1])
 wav = os.path.join(proj, 'work', 'aroll.wav')
 os.makedirs(os.path.join(proj, 'work'), exist_ok=True)
-prompt = sys.argv[2] if len(sys.argv) > 2 else 'Claude, Claude Code, skill.'
+prompt = skillenv.whisper_prompt(sys.argv[2] if len(sys.argv) > 2 else '')
 subprocess.run([skillenv.tool('ffmpeg'), '-loglevel', 'error', '-y', '-i', os.path.join(proj, 'assets', 'aroll.mp4'), '-vn', '-ac', '1',
                 '-ar', '16000', wav], check=True)
 m = WhisperModel('medium.en', compute_type='int8')
 s, _ = m.transcribe(wav, word_timestamps=True, vad_filter=False, initial_prompt=prompt)
-ws = [{'text': w.word.strip(), 'start': round(w.start, 3), 'end': round(w.end, 3)} for x in s for w in x.words]
+ws = [{'text': w.word.strip(), 'start': round(w.start, 3), 'end': round(w.end, 3), 'p': round(w.probability, 2)}
+      for x in s for w in x.words]
 with open(os.path.join(proj, 'words.json'), 'w', encoding='utf-8') as fh:
     json.dump(ws, fh, indent=1)
+low = [w for w in ws if w['p'] < skillenv.UNSURE]
+with open(os.path.join(proj, 'work', 'uncertain.txt'), 'w', encoding='utf-8') as fh:
+    fh.write(''.join(f"cut {w['start']:7.2f}  {w['text']}  p={w['p']:.2f}\n" for w in low))
 print(' '.join(f"{w['text']}@{w['start']:.2f}" for w in ws))
+print(f'{len(low)} uncertain words -> work/uncertain.txt (resolve them before rendering, see references/house-style.md)')

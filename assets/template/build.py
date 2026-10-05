@@ -12,8 +12,12 @@ Sections of the example (segment ids come from segments.json, written by scripts
   cta              Instagram profile recreation (agents/ig-follow): tap Follow, comment EDIT, with tap sounds
 
 Machinery to keep: dude_words(), cards(), girl(), orbit(), core(), claude_window(), skill_card(), ig_overlay(),
-grades(), audio(), SAFE_GUIDE, cut times from segments.json, S(t).
-Content to rewrite: GROUPS, CARDS, GIRL_BLOCKS, TRACK, SERIF, overlay files + in-times, SFX, SHIFT reference times.
+grades(), audio(), plain_captions(), SAFE_GUIDE, cut times from segments.json, S(t).
+Content to rewrite: GROUPS, CARDS, GIRL_BLOCKS, TRACK, SERIF, CAPTIONS, overlay files + in-times, SFX, SHIFT times.
+
+HOUSE STYLE (references/house-style.md) beats this example: it is deliberately busy. For a normal reel, normal
+dialogue goes in CAPTIONS (clean sentence-case chunks, plain_captions()), and the stylized machinery (GROUPS,
+TRACK/SERIF, behind-head words) is used for only 2-4 special moments.
 
 Run from the project folder with PY, the skill's Python (see SKILL.md):
 PY build.py            writes index.html
@@ -101,6 +105,25 @@ def dude_words():
             if b < DUR - .01:
                 tw.append(f"tl.to('#{wid}',{{autoAlpha:0,scale:.96,filter:'blur(16px)',duration:.12,ease:'power2.in'}},{b - .12:.3f});")
                 tw.append(f"tl.set('#{wid}',{{autoAlpha:0}},{b:.3f});")
+    return html, tw
+
+
+# ------------------------------------------------------------------ clean captions (house style default)
+# (start, end, text, top) one readable chunk of ~5-7 words per phrase, sentence case, max 2 lines.
+# Lower band by default (top ~1250); a close-up whose face reaches the lower band uses the top band (~250).
+# A chunk that ends at a cut must end on that cut's T value, or it lingers one frame into the next shot.
+CAPTIONS = []
+CAP_LOW, CAP_HIGH = 1250, 250
+
+
+def plain_captions():
+    html, tw = [], []
+    for k, (a, b, text, top) in enumerate(CAPTIONS):
+        html.append(f'<div id="cap{k}" class="cap" style="top:{top}px">{text}</div>')
+        tw += [f"gsap.set('#cap{k}',{{autoAlpha:0}});",
+               f"tl.fromTo('#cap{k}',{{autoAlpha:0,y:8}},{{autoAlpha:1,y:0,duration:.15,ease:'power2.out',immediateRender:false}},{a:.3f});"]
+        if b < DUR - .01:
+            tw.append(f"tl.set('#cap{k}',{{autoAlpha:0}},{b:.3f});")
     return html, tw
 
 
@@ -422,6 +445,10 @@ html,body{{width:1080px;height:1920px;overflow:hidden;background:#000}}
   filter:drop-shadow(0 40px 80px rgba(0,0,0,.55))}}
 #igw video{{width:760px;height:1000px;display:block}}
 .sm2{{font-size:56px;font-weight:800;letter-spacing:-.03em}}
+
+/* clean captions for normal dialogue (house style): readable, quiet, no per-word animation */
+.cap{{position:absolute;left:90px;right:120px;z-index:8;text-align:center;color:#F7F4EE;font:600 58px Inter;
+  line-height:1.18;letter-spacing:-.01em;text-shadow:0 2px 14px rgba(0,0,0,.65),0 1px 3px rgba(0,0,0,.5)}}
 '''
 
 
@@ -432,6 +459,10 @@ SAFE_GUIDE = ('<div style="position:absolute;inset:0;z-index:99;pointer-events:n
               '<div style="position:absolute;left:0;width:35px;top:220px;height:1250px;background:rgba(255,0,0,.28)"></div>'
               '<div style="position:absolute;right:0;width:35px;top:220px;height:935px;background:rgba(255,0,0,.28)"></div>'
               '<div style="position:absolute;right:0;width:100px;top:1155px;height:315px;background:rgba(255,0,0,.28)"></div></div>')
+
+
+# local copy when present (sandboxed machines block the CDN; see SKILL.md step 6), else the pinned CDN build
+GSAP = 'assets/gsap.min.js' if os.path.exists('assets/gsap.min.js') else 'https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js'
 
 
 def build():
@@ -445,7 +476,8 @@ def build():
     ig_html, ig_tw = ig_overlay()
     s_html, s_tw = core()
     sk_html, sk_tw = skill_card()
-    tweens = grades() + cw_tw + o_tw + w_tw + c_tw + g_tw + s_tw + ig_tw + sk_tw
+    p_html, p_tw = plain_captions()
+    tweens = grades() + cw_tw + o_tw + w_tw + c_tw + g_tw + s_tw + ig_tw + sk_tw + p_tw
     nl = '\n'
     return f'''<!doctype html>
 <html lang="en" data-resolution="portrait">
@@ -453,7 +485,7 @@ def build():
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=1080, height=1920" />
 <link rel="stylesheet" href="assets/fonts/fonts.css" />
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script src="{GSAP}"></script>
 <style>{CSS}</style>
 </head>
 <body>
@@ -474,6 +506,7 @@ def build():
 {nl.join(c_html)}
 {nl.join(g_html)}
 {nl.join(s_html)}
+{nl.join(p_html)}
 {nl.join(sk_html)}
 {SAFE_GUIDE if SAFE else ''}
 {nl.join(ig_html)}

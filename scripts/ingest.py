@@ -74,27 +74,36 @@ def main():
     subprocess.run([FF, '-loglevel', 'error', '-y', *ins, *stack, os.path.join(work, 'sheets.jpg')], check=True)
 
     m = WhisperModel('small.en', compute_type='int8')
-    lines = []
+    prompt = skillenv.whisper_prompt()   # vocabulary.txt: project names and spellings
+    lines, unsure = [], []
     for cid, f in sources.items():
         wav = os.path.join(work, f'{cid}.wav')
         subprocess.run([FF, '-loglevel', 'error', '-y', '-i', f, '-vn', '-ac', '1', '-ar', '16000', wav], check=True)
-        segs, _ = m.transcribe(wav, word_timestamps=True, vad_filter=False)
+        segs, _ = m.transcribe(wav, word_timestamps=True, vad_filter=False, initial_prompt=prompt)
         words = []
         lines.append(f'===== {cid}  {os.path.basename(f)}')
         for s in segs:
             lines.append(f'[{s.start:6.2f}-{s.end:6.2f}] {s.text.strip()}')
             for w in s.words:
                 t = w.word.strip()
-                if words and t[:1] in '-.' and len(t) > 1 and t[1:2].isdigit():   # "GPT" "-6" / "5" ".1"
-                    words[-1]['text'] += t; words[-1]['end'] = round(w.end, 3); continue
-                words.append({'text': t, 'start': round(w.start, 3), 'end': round(w.end, 3)})
+                if words and t[:1] in '-.,' and len(t) > 1 and t[1:2].isdigit():   # "GPT" "-6" / "$1" ",000"
+                    words[-1]['text'] += t; words[-1]['end'] = round(w.end, 3)
+                    words[-1]['p'] = min(words[-1]['p'], round(w.probability, 2)); continue
+                words.append({'text': t, 'start': round(w.start, 3), 'end': round(w.end, 3), 'p': round(w.probability, 2)})
         with open(os.path.join(proj, f'words_{cid}.json'), 'w', encoding='utf-8') as fh:
             json.dump(words, fh, indent=1)
         lines.append('words: ' + ' '.join(f"{w['text']}@{w['start']:.2f}" for w in words))
         lines.append('speech map: ' + speech_regions(f))
+        low = [w for w in words if w['p'] < skillenv.UNSURE]
+        if low:   # transcription preflight (house-style.md): review these before any render
+            lines.append('uncertain: ' + ' '.join(f"{w['text']}@{w['start']:.2f}({w['p']:.2f})" for w in low))
+            unsure += [f"{cid} {w['start']:7.2f}  {w['text']}  p={w['p']:.2f}" for w in low]
     with open(os.path.join(proj, 'transcript.txt'), 'w', encoding='utf-8') as fh:   # utf-8: Whisper emits curly quotes, notes
         fh.write('\n'.join(lines) + '\n')
+    with open(os.path.join(work, 'uncertain.txt'), 'w', encoding='utf-8') as fh:
+        fh.write('\n'.join(unsure) + '\n')
     print('\n'.join(lines))
+    print(f'{len(unsure)} uncertain words -> work/uncertain.txt (resolve them before rendering, see references/house-style.md)')
 
 
 if __name__ == '__main__':

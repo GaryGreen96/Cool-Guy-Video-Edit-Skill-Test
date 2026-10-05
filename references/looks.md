@@ -22,11 +22,15 @@ Kinetic lowercase words placed around the speaker, the big ones tucked BEHIND th
 - Signature move: the creator's own reels orbit them (orbit() in the template). Each reel tile exists twice (back copy below the cutout, front copy above), positions precomputed as GSAP keyframes every 0.1s around an ellipse, autoAlpha swapping at the ring's left/right extremes. Tiles 190x338, cream border. Keep the ring inside the safe zone.
 
 ## Cool dude (editorial studio look)
+(Restraint rules in `house-style.md` override the motion and type frequency below.)
 Inspired by high-end studio interview edits: dark room, lit subject, tiny tracked caps and big serif words.
 - Grade: room `contrast(1.1) saturate(.84) brightness(.8) hue-rotate(-4deg)`, the speaker cutout lifted: `contrast(1.06) saturate(.86) brightness(.98)` so they stay lit while the room falls back. Teal soft-light tone + vignette (.5) + bottom gradient. Dark is good; NO film grain (it reads as noise on faces).
 - Type: tiny wide-tracked caps in **Montserrat 500** (34px, letter-spacing .32em, words can be spread across the width with flex space-between) + heavy lowercase punch words in **DM Serif Display** (210-270px, italic for the final word). Cream `#F7F4EE`.
 - Motion: serif letters rise from a mask (`yPercent 115 -> 0`, stagger .028, expo.out) with a blur/scale settle; tracked words "track in" via `scaleX 1.45 -> 1` + blur (NOT letterSpacing, lint rejects it); quick .45s blur-to-focus into the section; slow push-ins (scale 1 -> 1.05 across a shot) instead of cut punches; one soft light sweep (screen blend) when the section opens.
-- Shots: wide, then a ~1.9x close-up cropped from the 4K original (alternate wide/close like a studio interview).
+- Shots: mostly the wide; a close-up only on a beat that earns it (~1.9x from a 4K original, max 1.1-1.2x from
+  1080p). Do NOT alternate wide/close on every line (tried on the first real test: read as over-edited).
+- Type usage: the serif punch words and tracked caps are for the 2-4 special moments only. Normal dialogue gets the
+  clean caption from house-style.md, not tracked caps per line.
 - Tried and dropped: replacing the room with an AI-generated background (looked fake), black and white, crushed-dark grades, film grain.
 
 ## Fonts on hand (assets/template/assets/fonts, latin woff2 + fonts.css, SIL Open Font License)
